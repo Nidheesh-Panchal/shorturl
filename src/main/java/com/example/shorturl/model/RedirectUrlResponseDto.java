@@ -1,14 +1,11 @@
 package com.example.shorturl.model;
 
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import lombok.ToString;
+import lombok.*;
 
-@Getter
-@Setter
+@Data
 @NoArgsConstructor
-@ToString
 public class RedirectUrlResponseDto {
     private String originalUrl;
+    private String error;
+    private String status;
 }
