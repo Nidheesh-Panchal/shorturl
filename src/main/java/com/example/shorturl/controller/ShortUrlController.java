@@ -1,19 +1,17 @@
 package com.example.shorturl.controller;
 
 import com.example.shorturl.model.*;
-import com.example.shorturl.repository.ShortUrlRepository;
 import com.example.shorturl.service.UrlService;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
-import java.time.LocalDateTime;
 
 @RestController
+@RequestMapping("/api/v1")
 public class ShortUrlController {
 
     @Autowired

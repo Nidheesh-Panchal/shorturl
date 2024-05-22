@@ -5,6 +5,7 @@ import lombok.experimental.Accessors;
 
 import java.time.LocalDateTime;
 
+@NoArgsConstructor
 @Data
 public class ShortUrlRequestDto {
     private @NonNull String originalUrl;
