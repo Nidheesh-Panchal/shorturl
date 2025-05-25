@@ -11,6 +11,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
@@ -25,6 +26,7 @@ public class UrlServiceImpl implements UrlService{
     @Autowired
     ShortUrlRepository shortUrlRepository;
 
+    @Transactional
     @Override
     public ShortUrlResponseDto generateShortUrl(ShortUrlRequestDto shortUrlRequestDto) {
         ShortUrlResponseDto shortUrlResponseDto = new ShortUrlResponseDto();
@@ -59,6 +61,7 @@ public class UrlServiceImpl implements UrlService{
         return shortUrlResponseDto;
     }
 
+    @Transactional
     @Override
     public RedirectUrlResponseDto getOriginalUrl(String shortUrl) {
         RedirectUrlResponseDto redirectUrlResponseDto = new RedirectUrlResponseDto();
