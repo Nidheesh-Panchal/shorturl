@@ -23,7 +23,7 @@ Run the following command to build the project. This will generate a `*.jar` fil
 
 ```bash
 # build project
-mv clean package
+mvn clean package
 
 # A jar is created at the target/shorturl-0.0.1.jar
 ```
