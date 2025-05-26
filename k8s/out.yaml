@@ -10,6 +10,22 @@ apiVersion: v1
 kind: Service
 metadata:
   labels:
+    app: db
+    env: base
+  name: db
+  namespace: shorturl
+spec:
+  ports:
+  - port: 5432
+    targetPort: 5432
+  selector:
+    app: db
+  type: ClusterIP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
     app: shorturl
     env: base
   name: shorturl
@@ -21,6 +37,84 @@ spec:
   selector:
     app: shorturl
   type: ClusterIP
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  labels:
+    app: db
+    env: base
+  name: db-data
+  namespace: shorturl
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: db
+    env: base
+  name: db
+  namespace: shorturl
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: db
+  template:
+    metadata:
+      labels:
+        app: db
+        env: base
+    spec:
+      containers:
+      - env:
+        - name: POSTGRES_USER
+          value: root
+        - name: POSTGRES_PASSWORD
+          value: root
+        - name: POSTGRES_DB
+          value: db
+        image: postgres:13.1-alpine
+        livenessProbe:
+          exec:
+            command:
+            - pg_isready
+            - -U
+            - root
+            - -d
+            - db
+          failureThreshold: 5
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 5
+        name: postgres
+        ports:
+        - containerPort: 5432
+        readinessProbe:
+          exec:
+            command:
+            - pg_isready
+            - -U
+            - root
+            - -d
+            - db
+          failureThreshold: 5
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 5
+        volumeMounts:
+        - mountPath: /var/lib/postgresql/data
+          name: db-data
+      volumes:
+      - name: db-data
+        persistentVolumeClaim:
+          claimName: db-data
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -41,10 +135,42 @@ spec:
         env: base
     spec:
       containers:
-      - image: shorturl:v0.0.1
+      - env:
+        - name: SPRING_DATASOURCE_URL
+          value: jdbc:postgresql://db:5432/db
+        - name: SPRING_DATASOURCE_USERNAME
+          value: root
+        - name: SPRING_DATASOURCE_PASSWORD
+          value: root
+        - name: SPRING_JPA_HIBERNATE_DDL_AUTO
+          value: update
+        image: short-url:v0.0.1
         name: shorturl
         ports:
         - containerPort: 8080
+      initContainers:
+      - command:
+        - sh
+        - -c
+        - |
+          until pg_isready -U "$PGUSER" -d "$PGDATABASE" -h "$PGHOST" -p "$PGPORT"; do
+            echo "Waiting for PostgreSQL to be ready at $PGHOST:$PGPORT...";
+            sleep 2;
+          done
+          echo "PostgreSQL is ready!";
+        env:
+        - name: PGHOST
+          value: db
+        - name: PGPORT
+          value: "5432"
+        - name: PGUSER
+          value: root
+        - name: PGPASSWORD
+          value: root
+        - name: PGDATABASE
+          value: db
+        image: postgres:13.1-alpine
+        name: wait-for-postgres
 ---
 apiVersion: autoscaling/v1
 kind: HorizontalPodAutoscaler

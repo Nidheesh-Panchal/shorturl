@@ -17,8 +17,41 @@ spec:
         app: shorturl
         env: base
     spec:
+      initContainers:
+        - name: wait-for-postgres
+          image: postgres:13.1-alpine
+          env:
+            - name: PGHOST
+              value: db
+            - name: PGPORT
+              value: "5432"
+            - name: PGUSER
+              value: root
+            - name: PGPASSWORD
+              value: root
+            - name: PGDATABASE
+              value: db
+          command:
+            - sh
+            - -c
+            - |
+              until pg_isready -U "$PGUSER" -d "$PGDATABASE" -h "$PGHOST" -p "$PGPORT"; do
+                echo "Waiting for PostgreSQL to be ready at $PGHOST:$PGPORT...";
+                sleep 2;
+              done
+              echo "PostgreSQL is ready!";
+
       containers:
         - name: shorturl
           image: short-url:v0.0.1
           ports:
             - containerPort: 8080
+          env:
+            - name: SPRING_DATASOURCE_URL
+              value: jdbc:postgresql://db:5432/db
+            - name: SPRING_DATASOURCE_USERNAME
+              value: root
+            - name: SPRING_DATASOURCE_PASSWORD
+              value: root
+            - name: SPRING_JPA_HIBERNATE_DDL_AUTO
+              value: update
